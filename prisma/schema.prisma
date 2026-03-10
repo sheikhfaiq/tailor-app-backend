@@ -1,0 +1,98 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id           Int      @id @default(autoincrement())
+  username     String   @unique
+  passwordHash String
+  role         String   @default("STAFF") // ADMIN, STAFF
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Customer {
+  id                   Int                   @id @default(autoincrement())
+  name                 String
+  phone                String                @unique
+  address              String?
+  notes                String?
+  createdAt            DateTime              @default(now())
+  updatedAt            DateTime              @updatedAt
+  orders               Order[]
+  customerMeasurements CustomerMeasurement[]
+}
+
+model MeasurementType {
+  id                   Int                   @id @default(autoincrement())
+  nameEn               String                @unique
+  nameUr               String
+  unit                 String                @default("inch") // inch, cm
+  customerMeasurements CustomerMeasurement[]
+}
+
+model CustomerMeasurement {
+  id                Int             @id @default(autoincrement())
+  customerId        Int
+  measurementTypeId Int
+  value             String
+  customer          Customer        @relation(fields: [customerId], references: [id])
+  type              MeasurementType @relation(fields: [measurementTypeId], references: [id])
+
+  @@unique([customerId, measurementTypeId])
+}
+
+model Order {
+  id               Int                @id @default(autoincrement())
+  orderNumber      String             @unique
+  customerId       Int
+  dressType        String
+  quantity         Int                @default(1)
+  totalPrice       Decimal            @db.Decimal(10, 2)
+  advance          Decimal            @db.Decimal(10, 2) @default(0)
+  deliveryDate     DateTime?
+  status           String             @default("PENDING") // PENDING, STITCHING, READY, DELIVERED
+  notes            String?
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+  customer         Customer           @relation(fields: [customerId], references: [id])
+  orderMeasurements OrderMeasurement[]
+  payments         Payment[]
+  orderItems       OrderItem[]
+}
+
+model OrderMeasurement {
+  id      Int    @id @default(autoincrement())
+  orderId Int
+  name    String
+  value   String
+  order   Order  @relation(fields: [orderId], references: [id])
+}
+
+model OrderItem {
+  id       Int     @id @default(autoincrement())
+  orderId  Int
+  itemName String
+  quantity Int     @default(1)
+  price    Decimal @db.Decimal(10, 2)
+  order    Order   @relation(fields: [orderId], references: [id])
+}
+
+model Payment {
+  id      Int      @id @default(autoincrement())
+  orderId Int
+  amount  Decimal  @db.Decimal(10, 2)
+  method  String   @default("CASH") // CASH, CARD, ONLINE
+  paidAt  DateTime @default(now())
+  notes   String?
+  order   Order    @relation(fields: [orderId], references: [id])
+}
