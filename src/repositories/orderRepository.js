@@ -31,6 +31,7 @@ const orderRepository = {
                         itemName: i.itemName,
                         quantity: i.quantity || 1,
                         price: i.price,
+                        color: i.color,
                     })),
                 });
             }

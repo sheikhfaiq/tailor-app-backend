@@ -85,6 +85,7 @@ model OrderItem {
   itemName String
   quantity Int     @default(1)
   price    Decimal @db.Decimal(10, 2)
+  color    String?
   order    Order   @relation(fields: [orderId], references: [id])
 }
 

@@ -13,11 +13,15 @@ const dashboardController = {
                 if (endDate) dateFilter.createdAt.lte = new Date(endDate);
             }
 
-            const [pendingOrders, stitchingOrders, readyOrders, totalCustomers] = await Promise.all([
+            const [pendingOrders, stitchingOrders, readyOrders, totalCustomers, incomeResult] = await Promise.all([
                 prisma.order.count({ where: { status: 'PENDING', ...dateFilter } }),
                 prisma.order.count({ where: { status: 'STITCHING', ...dateFilter } }),
                 prisma.order.count({ where: { status: 'READY', ...dateFilter } }),
-                prisma.customer.count({ where: dateFilter })
+                prisma.customer.count({ where: dateFilter }),
+                prisma.order.aggregate({
+                    _sum: { totalPrice: true },
+                    where: dateFilter
+                })
             ]);
 
             res.status(200).json({
@@ -26,7 +30,8 @@ const dashboardController = {
                     pendingOrders,
                     stitchingOrders,
                     readyOrders,
-                    totalCustomers
+                    totalCustomers,
+                    totalIncome: incomeResult._sum.totalPrice || 0
                 }
             });
         } catch (err) {
