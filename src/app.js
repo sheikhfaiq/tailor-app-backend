@@ -30,6 +30,15 @@ app.use((req, res, next) => {
     next();
 });
 
+// Root Route
+app.get('/', (req, res) => {
+    res.status(200).json({
+        message: 'Tailor App API is running / ٹیلر ایپ اے پی آئی چل رہی ہے',
+        version: '1.0.0',
+        docs: '/health'
+    });
+});
+
 // Health Check
 app.get('/health', (req, res) => {
     res.status(200).json({ status: 'UP', timestamp: new Date().toISOString() });
