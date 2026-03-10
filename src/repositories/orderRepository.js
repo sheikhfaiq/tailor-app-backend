@@ -78,10 +78,26 @@ const orderRepository = {
     },
 
     async delete(id) {
-        // Prisma cascading delete should be handled in schema or manually
-        // For now, simple delete of the order (and linked items via schema relation if configured)
-        return prisma.order.delete({
-            where: { id: parseInt(id) },
+        return prisma.$transaction(async (tx) => {
+            // 1. Delete linked Order Measurements
+            await tx.orderMeasurement.deleteMany({
+                where: { orderId: parseInt(id) },
+            });
+
+            // 2. Delete linked Order Items
+            await tx.orderItem.deleteMany({
+                where: { orderId: parseInt(id) },
+            });
+
+            // 3. Delete linked Payments
+            await tx.payment.deleteMany({
+                where: { orderId: parseInt(id) },
+            });
+
+            // 4. Delete the Order itself
+            return tx.order.delete({
+                where: { id: parseInt(id) },
+            });
         });
     },
 };

@@ -24,8 +24,16 @@ const customerRepository = {
     },
 
     async delete(id) {
-        return prisma.customer.delete({
-            where: { id: parseInt(id) },
+        return prisma.$transaction(async (tx) => {
+            // 1. Delete linked Customer Measurements
+            await tx.customerMeasurement.deleteMany({
+                where: { customerId: parseInt(id) },
+            });
+
+            // 2. Delete the Customer
+            return tx.customer.delete({
+                where: { id: parseInt(id) },
+            });
         });
     },
 
